@@ -71,7 +71,7 @@ class GroqProvider(BaseLLMProvider):
                                         choices = chunk.get("choices", [])
                                         if choices:
                                             delta = choices[0].get("delta", {})
-                                            content = delta.get("content", "")
+                                            content = delta.get("content") or delta.get("reasoning") or delta.get("reasoning_content") or ""
                                             if content:
                                                 yield content
                                     except json.JSONDecodeError:
