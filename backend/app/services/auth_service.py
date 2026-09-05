@@ -4,6 +4,9 @@ Authentication Service: Handles Registration, Login, Google OAuth, and Token Lif
 
 import uuid
 import secrets
+import base64
+import json
+import jwt
 from datetime import datetime, timedelta
 from typing import Optional, Tuple, Dict, Any
 import httpx
@@ -132,18 +135,22 @@ class AuthService:
         except Exception:
             pass
 
-        # Fallback decode if offline / mock
+        # Fallback decode if offline / demo / mock
         if not user_info:
             try:
-                # Unverified claims extraction for dev / testing environments
-                user_info = jwt.decode(credential, options={"verify_signature": False})
+                parts = credential.split(".")
+                if len(parts) >= 2:
+                    padded = parts[1] + "=" * ((4 - len(parts[1]) % 4) % 4)
+                    user_info = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
+                else:
+                    user_info = jwt.decode(credential, options={"verify_signature": False})
             except Exception:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Invalid Google OAuth credential token"
                 )
 
-        email = user_info.get("email")
+        email = user_info.get("email") if isinstance(user_info, dict) else None
         if not email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
