@@ -43,5 +43,10 @@ async def init_db() -> None:
     """Initialize database tables on application startup."""
     # Ensure upload directory exists
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    # Ensure all models are registered on Base.metadata
+    from app.models.user import User, UserSettings
+    from app.models.chat import Conversation, Message, MessageFeedback
+    from app.models.document import Document, DocumentChunk
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
