@@ -4,10 +4,12 @@ Document, Chunk, and RAG Query Schemas.
 
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ChunkOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     document_id: str
     chunk_index: int
@@ -17,11 +19,10 @@ class ChunkOut(BaseModel):
     meta_info: Optional[Dict[str, Any]] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class DocumentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     filename: str
     file_type: str
@@ -30,15 +31,11 @@ class DocumentOut(BaseModel):
     total_chunks: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class DocumentDetailOut(DocumentOut):
-    chunks: List[ChunkOut] = []
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
+    chunks: List[ChunkOut] = []
 
 
 class RAGQueryRequest(BaseModel):

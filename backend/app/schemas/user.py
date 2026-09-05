@@ -3,7 +3,7 @@ User Profile, Settings, and Model Listing Schemas.
 """
 
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from app.schemas.auth import UserOut
 
 
@@ -23,15 +23,14 @@ class UserSettingsUpdate(BaseModel):
 
 
 class UserSettingsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     default_model: str
     default_provider: str
     system_prompt: Optional[str] = None
     temperature: str
     theme: str
     custom_api_keys_status: Dict[str, bool] = {}  # Returns True/False if key exists for provider
-
-    class Config:
-        from_attributes = True
 
 
 class AvailableModel(BaseModel):

@@ -4,7 +4,7 @@ Conversation, Message, Feedback, and Streaming Schemas.
 
 from datetime import datetime
 from typing import List, Optional, Any, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class SourceCitation(BaseModel):
@@ -23,17 +23,18 @@ class FeedbackCreate(BaseModel):
 
 
 class FeedbackOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     message_id: str
     rating: int
     feedback_text: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class MessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     conversation_id: str
     role: str
@@ -45,9 +46,6 @@ class MessageOut(BaseModel):
     finish_reason: Optional[str] = "stop"
     created_at: datetime
     feedback: Optional[FeedbackOut] = None
-
-    class Config:
-        from_attributes = True
 
 
 class MessageCreate(BaseModel):
@@ -88,6 +86,8 @@ class ConversationUpdate(BaseModel):
 
 
 class ConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     title: str
     model: str
@@ -99,14 +99,10 @@ class ConversationOut(BaseModel):
     message_count: Optional[int] = 0
     last_message_preview: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
 
 class ConversationDetailOut(ConversationOut):
+    model_config = ConfigDict(from_attributes=True)
+
     system_prompt: Optional[str] = None
     temperature: str = "0.7"
     messages: List[MessageOut] = []
-
-    class Config:
-        from_attributes = True

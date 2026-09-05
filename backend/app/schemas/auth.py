@@ -3,7 +3,7 @@ Authentication and Authorization Request & Response Schemas.
 """
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 class UserRegister(BaseModel):
@@ -42,15 +42,14 @@ class PasswordResetConfirm(BaseModel):
 
 
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     email: str
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
     auth_provider: str
     is_active: bool
-
-    class Config:
-        from_attributes = True
 
 
 # Re-resolve forward reference for TokenResponse
