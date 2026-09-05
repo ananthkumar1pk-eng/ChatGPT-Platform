@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Next.js build
+.next/
+out/
+
+# Database & uploads
+backend/chatgpt.db
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Environment files
+.env
+.env.local
+*.log
