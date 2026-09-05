@@ -36,26 +36,22 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS Middleware
-origins = settings.cors_origin_list
-allow_all = "*" in origins or "*" in settings.CORS_ORIGINS or not origins
-
-if allow_all:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origin_regex=".*",
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Universal CORS Middleware for Web & Firebase Hosting
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://chatgpt-66492.web.app",
+        "https://chatgpt-66492.firebaseapp.com",
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_origin_regex=r"^https?://.*",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 # Mount Routers
 app.include_router(auth_router)
