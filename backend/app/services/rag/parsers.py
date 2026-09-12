@@ -37,6 +37,12 @@ class DocumentParser:
 
     @staticmethod
     def _parse_pdf(file_path: str) -> Tuple[List[Dict[str, Any]], int]:
+        import io
+        import time
+        import logging
+        from PIL import Image
+        logger = logging.getLogger(__name__)
+
         pages_out = []
         try:
             reader = pypdf.PdfReader(file_path)
@@ -49,19 +55,55 @@ class DocumentParser:
                         "text": text.strip(),
                         "meta": {"type": "pdf_page"}
                     })
+                else:
+                    # Page has no selectable text (scanned image / presentation slide)
+                    # Extract largest image and perform Florence-2 / Multimodal Vision OCR
+                    try:
+                        largest_img = None
+                        max_area = 0
+                        for img_obj in page.images:
+                            try:
+                                pil_img = Image.open(io.BytesIO(img_obj.data))
+                                area = pil_img.size[0] * pil_img.size[1]
+                                if area > max_area and pil_img.size[0] > 100 and pil_img.size[1] > 100:
+                                    max_area = area
+                                    largest_img = pil_img
+                            except Exception:
+                                pass
+
+                        if largest_img:
+                            # Resize to max 768px for token efficiency and high OCR accuracy
+                            largest_img.thumbnail((768, 768), Image.Resampling.LANCZOS)
+                            from app.services.vision.florence_service import Florence2VisionService
+                            ocr_res = Florence2VisionService.analyze_image(
+                                image_input=largest_img,
+                                task="ocr",
+                                custom_question="Extract all text, slide titles, definitions, bullet points, and code blocks from this slide verbatim."
+                            )
+                            extracted = (
+                                ocr_res.get("detailed_caption")
+                                or ocr_res.get("ocr_text")
+                                or ocr_res.get("caption")
+                                or ""
+                            )
+                            if extracted.strip():
+                                pages_out.append({
+                                    "page_number": idx + 1,
+                                    "text": f"[Slide / Page {idx+1}]\n{extracted.strip()}",
+                                    "meta": {"type": "pdf_ocr_page"}
+                                })
+                            time.sleep(1.0)
+                    except Exception as ocr_err:
+                        logger.warning(f"OCR parsing error on PDF page {idx+1}: {ocr_err}")
+
             if not pages_out and total > 0:
                 pages_out.append({
                     "page_number": 1,
-                    "text": (
-                        f"[Document Notice: This PDF file contains {total} pages of scanned raster images or slides "
-                        f"without an embedded selectable text layer. To perform rich semantic search and question-answering, "
-                        f"please upload a text-based PDF, DOCX, TXT, CSV, or JSON document.]"
-                    ),
-                    "meta": {"type": "pdf_scanned_notice"}
+                    "text": f"[Document Notice: PDF contains {total} pages with no extractable text.]",
+                    "meta": {"type": "pdf_empty"}
                 })
             return pages_out, max(1, total)
         except Exception as e:
-            # Fallback if corrupted
             return [{"page_number": 1, "text": f"[Error reading PDF: {str(e)}]", "meta": {}}], 1
 
     @staticmethod

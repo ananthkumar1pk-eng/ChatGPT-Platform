@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PanelLeft, Sparkles, BookOpen, Share2, LayoutDashboard, MessageSquare } from "lucide-react";
+import {
+  PanelLeft,
+  Sparkles,
+  BookOpen,
+  Share2,
+  LayoutDashboard,
+  Camera,
+} from "lucide-react";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { ChatContainer } from "@/components/chat/ChatContainer";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -10,15 +17,17 @@ import { FileUploadDrawer } from "@/components/chat/FileUploadDrawer";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { UserProfileModal } from "@/components/modals/UserProfileModal";
 import { ShareModal } from "@/components/modals/ShareModal";
+import { CameraAnalysisModal } from "@/components/modals/CameraAnalysisModal";
+import { SanaImageModal } from "@/components/modals/SanaImageModal";
 import { LandingPage } from "@/components/landing/LandingPage";
 import { Conversation } from "@/types/chat";
 import { useChat } from "@/context/ChatContext";
 import { useAuth } from "@/context/AuthContext";
 
 export default function HomePage() {
-  const { activeConversation, messages } = useChat();
+  const { activeConversation, messages, sendMessage } = useChat();
   const { user } = useAuth();
-  
+
   const [viewMode, setViewMode] = useState<"landing" | "chat">("landing");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -26,6 +35,10 @@ export default function HomePage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareConv, setShareConv] = useState<Conversation | null>(null);
+
+  // Multimodal modals
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [imageStudioOpen, setImageStudioOpen] = useState(false);
 
   // If user selects an active conversation or starts chatting, switch to chat canvas
   useEffect(() => {
@@ -43,6 +56,18 @@ export default function HomePage() {
     setViewMode("chat");
   };
 
+  const handleInsertFromCamera = (analysisText: string) => {
+    sendMessage(
+      `Please review and elaborate on this Florence-2 Camera Analysis:\n\n${analysisText}`
+    );
+  };
+
+  const handleInsertFromImageStudio = (imageMarkdown: string) => {
+    sendMessage(
+      `Here is an image generated with Sana 1.6B Diffusion:\n\n${imageMarkdown}\n\nLet's brainstorm creative variations and artistic backstory for this concept!`
+    );
+  };
+
   if (viewMode === "landing") {
     return (
       <div className="relative min-h-screen bg-slate-50 dark:bg-[#0d1117]">
@@ -55,8 +80,14 @@ export default function HomePage() {
           onOpenSettings={() => setSettingsOpen(true)}
         />
         {/* Modals */}
-        <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
-        <UserProfileModal isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
+        <SettingsModal
+          isOpen={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
+        <UserProfileModal
+          isOpen={profileOpen}
+          onClose={() => setProfileOpen(false)}
+        />
       </div>
     );
   }
@@ -90,7 +121,25 @@ export default function HomePage() {
             <ModelSelector />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Quick Florence-2 Camera Launch */}
+            <button
+              onClick={() => setCameraOpen(true)}
+              title="Florence-2 Camera VLM Analysis"
+              className="p-2 rounded-lg text-slate-500 hover:text-emerald-500 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+
+            {/* Quick Sana 1.6B Studio Launch */}
+            <button
+              onClick={() => setImageStudioOpen(true)}
+              title="Sana 1.6B Text-to-Image Diffusion Studio"
+              className="p-2 rounded-lg text-slate-500 hover:text-violet-500 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+
             {/* Switch to Landing View Button */}
             <button
               onClick={() => setViewMode("landing")}
@@ -98,7 +147,7 @@ export default function HomePage() {
               className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 dark:text-zinc-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1.5"
             >
               <LayoutDashboard className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="hidden sm:inline">Landing Overview</span>
+              <span className="hidden sm:inline">Overview</span>
             </button>
 
             <button
@@ -125,15 +174,43 @@ export default function HomePage() {
         <ChatContainer onOpenUpload={() => setUploadOpen(true)} />
 
         {/* Bottom Input Area */}
-        <ChatInput onOpenUpload={() => setUploadOpen(true)} />
+        <ChatInput
+          onOpenUpload={() => setUploadOpen(true)}
+          onOpenCamera={() => setCameraOpen(true)}
+          onOpenImageStudio={() => setImageStudioOpen(true)}
+        />
       </main>
 
       {/* Modals & Drawers */}
-      <FileUploadDrawer isOpen={uploadOpen} onClose={() => setUploadOpen(false)} />
-      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <UserProfileModal isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
-      <ShareModal conversation={shareConv} isOpen={shareOpen} onClose={() => setShareOpen(false)} />
+      <FileUploadDrawer
+        isOpen={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+      />
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
+      <UserProfileModal
+        isOpen={profileOpen}
+        onClose={() => setProfileOpen(false)}
+      />
+      <ShareModal
+        conversation={shareConv}
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
+
+      {/* Multimodal Modals */}
+      <CameraAnalysisModal
+        isOpen={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onInsertToChat={handleInsertFromCamera}
+      />
+      <SanaImageModal
+        isOpen={imageStudioOpen}
+        onClose={() => setImageStudioOpen(false)}
+        onInsertToChat={handleInsertFromImageStudio}
+      />
     </div>
   );
 }
-

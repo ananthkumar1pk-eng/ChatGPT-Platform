@@ -1,114 +1,184 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Copy } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Check, Copy, Terminal } from "lucide-react";
 
 interface MarkdownRendererProps {
   content: string;
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  // Simple, resilient parser for markdown formatting
-  const renderFormattedText = (text: string) => {
-    // Split by code blocks ```lang ... ```
-    const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
-    const elements: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
+  return (
+    <div className="prose-custom max-w-none text-slate-800 dark:text-[#ececec] overflow-hidden">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          // Custom Table Rendering
+          table({ children }) {
+            return (
+              <div className="my-4 w-full overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-[#1e1e1e]">
+                <table className="w-full text-left text-sm border-collapse min-w-[320px]">
+                  {children}
+                </table>
+              </div>
+            );
+          },
+          thead({ children }) {
+            return (
+              <thead className="bg-slate-100 dark:bg-slate-850 text-slate-900 dark:text-slate-100 font-semibold border-b border-slate-200 dark:border-slate-750">
+                {children}
+              </thead>
+            );
+          },
+          tbody({ children }) {
+            return (
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {children}
+              </tbody>
+            );
+          },
+          tr({ children }) {
+            return (
+              <tr className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                {children}
+              </tr>
+            );
+          },
+          th({ children }) {
+            return (
+              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+                {children}
+              </th>
+            );
+          },
+          td({ children }) {
+            return (
+              <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300 align-top">
+                {children}
+              </td>
+            );
+          },
 
-    while ((match = codeBlockRegex.exec(text)) !== null) {
-      const matchIndex = match.index;
-      // Push preceding text
-      if (matchIndex > lastIndex) {
-        elements.push(
-          <div key={`text-${lastIndex}`} className="prose-custom whitespace-pre-wrap">
-            {renderInlineMarkdown(text.substring(lastIndex, matchIndex))}
-          </div>
-        );
-      }
+          // Code blocks and inline code
+          code({ node, inline, className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || "");
+            const codeString = String(children).replace(/\n$/, "");
 
-      const language = match[1] || "plaintext";
-      const codeContent = match[2];
-      elements.push(
-        <CodeBlock key={`code-${matchIndex}`} language={language} code={codeContent} />
-      );
+            if (!inline && (match || codeString.includes("\n"))) {
+              return (
+                <CodeBlock
+                  language={match ? match[1] : "plaintext"}
+                  code={codeString}
+                />
+              );
+            }
 
-      lastIndex = matchIndex + match[0].length;
-    }
+            return (
+              <code
+                className="px-1.5 py-0.5 rounded font-mono text-xs font-medium bg-slate-100 dark:bg-slate-800/90 text-emerald-600 dark:text-emerald-400 border border-slate-200/60 dark:border-slate-700/50"
+                {...props}
+              >
+                {children}
+              </code>
+            );
+          },
 
-    if (lastIndex < text.length) {
-      elements.push(
-        <div key={`text-${lastIndex}`} className="prose-custom whitespace-pre-wrap">
-          {renderInlineMarkdown(text.substring(lastIndex))}
-        </div>
-      );
-    }
+          // Headings
+          h1({ children }) {
+            return (
+              <h1 className="text-2xl font-bold mt-6 mb-3 text-slate-900 dark:text-white tracking-tight border-b border-slate-200 dark:border-slate-800 pb-2">
+                {children}
+              </h1>
+            );
+          },
+          h2({ children }) {
+            return (
+              <h2 className="text-xl font-bold mt-5 mb-2.5 text-slate-900 dark:text-white tracking-tight">
+                {children}
+              </h2>
+            );
+          },
+          h3({ children }) {
+            return (
+              <h3 className="text-lg font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">
+                {children}
+              </h3>
+            );
+          },
+          h4({ children }) {
+            return (
+              <h4 className="text-base font-semibold mt-3 mb-1.5 text-slate-800 dark:text-slate-200">
+                {children}
+              </h4>
+            );
+          },
 
-    return elements;
-  };
+          // Lists
+          ul({ children }) {
+            return <ul className="my-2.5 ml-5 list-disc space-y-1">{children}</ul>;
+          },
+          ol({ children }) {
+            return <ol className="my-2.5 ml-5 list-decimal space-y-1">{children}</ol>;
+          },
+          li({ children }) {
+            return (
+              <li className="text-slate-700 dark:text-slate-300 leading-relaxed marker:text-emerald-500 dark:marker:text-emerald-400">
+                {children}
+              </li>
+            );
+          },
 
-  const renderInlineMarkdown = (raw: string): React.ReactNode => {
-    // Process markdown headers, bold, bullet points, blockquotes
-    const lines = raw.split("\n");
-    return lines.map((line, idx) => {
-      if (line.startsWith("### ")) {
-        return <h3 key={idx} className="text-lg font-bold mt-4 mb-2 text-slate-900 dark:text-white">{line.slice(4)}</h3>;
-      }
-      if (line.startsWith("## ")) {
-        return <h2 key={idx} className="text-xl font-bold mt-5 mb-2 text-slate-900 dark:text-white">{line.slice(3)}</h2>;
-      }
-      if (line.startsWith("# ")) {
-        return <h1 key={idx} className="text-2xl font-bold mt-6 mb-3 text-slate-900 dark:text-white">{line.slice(2)}</h1>;
-      }
-      if (line.startsWith("> ")) {
-        return (
-          <blockquote key={idx} className="border-l-4 border-emerald-500 pl-3 italic my-2 text-slate-600 dark:text-slate-300">
-            {line.slice(2)}
-          </blockquote>
-        );
-      }
-      if (line.startsWith("- ") || line.startsWith("* ")) {
-        return (
-          <li key={idx} className="ml-4 list-disc my-1">
-            {formatInlineText(line.slice(2))}
-          </li>
-        );
-      }
-      if (line.match(/^\d+\.\s/)) {
-        const numMatch = line.match(/^\d+\.\s/);
-        const prefix = numMatch ? numMatch[0] : "";
-        return (
-          <li key={idx} className="ml-4 list-decimal my-1">
-            {formatInlineText(line.slice(prefix.length))}
-          </li>
-        );
-      }
-      if (!line.trim()) {
-        return <div key={idx} className="h-2" />;
-      }
-      return <p key={idx} className="my-1.5">{formatInlineText(line)}</p>;
-    });
-  };
+          // Paragraphs & Blockquotes
+          p({ children }) {
+            return (
+              <p className="my-2.5 leading-relaxed text-slate-700 dark:text-[#d1d1d1]">
+                {children}
+              </p>
+            );
+          },
+          blockquote({ children }) {
+            return (
+              <blockquote className="my-3 pl-4 border-l-4 border-emerald-500 bg-slate-50/60 dark:bg-slate-850/40 py-2 rounded-r-md italic text-slate-600 dark:text-slate-300">
+                {children}
+              </blockquote>
+            );
+          },
 
-  const formatInlineText = (text: string): React.ReactNode => {
-    // Bold **text** and inline `code`
-    const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith("**") && part.endsWith("**")) {
-        return <strong key={i} className="font-semibold text-slate-900 dark:text-white">{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith("`") && part.endsWith("`")) {
-        return (
-          <code key={i} className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs text-emerald-600 dark:text-emerald-400">
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
-      return part;
-    });
-  };
+          // Links
+          a({ href, children }) {
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 dark:text-emerald-400 font-medium underline underline-offset-2 hover:text-emerald-500 transition-colors"
+              >
+                {children}
+              </a>
+            );
+          },
 
-  return <div className="space-y-2">{renderFormattedText(content)}</div>;
+          // Divider
+          hr() {
+            return <hr className="my-6 border-slate-200 dark:border-slate-800" />;
+          },
+
+          // Strong & Emphasis
+          strong({ children }) {
+            return (
+              <strong className="font-semibold text-slate-900 dark:text-white">
+                {children}
+              </strong>
+            );
+          },
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
 }
 
 function CodeBlock({ language, code }: { language: string; code: string }) {
@@ -121,27 +191,36 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
   };
 
   return (
-    <div className="my-4 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 font-mono text-xs">
-      <div className="flex items-center justify-between px-4 py-1.5 bg-slate-900 border-b border-slate-800 text-slate-400">
-        <span className="text-[11px] font-medium uppercase tracking-wider">{language || "Code"}</span>
+    <div className="my-4 rounded-xl overflow-hidden border border-slate-700/80 bg-[#0d1117] font-mono text-xs shadow-md">
+      {/* Code Header Bar */}
+      <div className="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-slate-800 text-slate-400">
+        <div className="flex items-center gap-2">
+          <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-[11px] font-medium uppercase tracking-wider text-slate-300">
+            {language || "code"}
+          </span>
+        </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 hover:text-white transition-colors text-[11px]"
+          className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-[11px]"
+          title="Copy code to clipboard"
         >
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400">Copied!</span>
+              <span className="text-emerald-400 font-medium">Copied!</span>
             </>
           ) : (
             <>
               <Copy className="w-3.5 h-3.5" />
-              <span>Copy code</span>
+              <span>Copy</span>
             </>
           )}
         </button>
       </div>
-      <pre className="p-4 overflow-x-auto text-slate-200 leading-relaxed">
+
+      {/* Code Content */}
+      <pre className="p-4 overflow-x-auto text-slate-100 leading-relaxed font-mono">
         <code>{code}</code>
       </pre>
     </div>

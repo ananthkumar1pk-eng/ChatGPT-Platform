@@ -4,13 +4,14 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { User, TokenResponse } from "@/types/auth";
 import { ApiClient } from "@/lib/api";
+import { signInWithGoogleFirebase, signOutFirebase } from "@/lib/firebase";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName?: string) => Promise<void>;
-  loginWithGoogle: (credential: string) => Promise<void>;
+  loginWithGoogle: (credential?: string) => Promise<void>;
   logout: () => void;
   updateUser: (user: User) => void;
 }
@@ -65,12 +66,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     handleAuthSuccess(res);
   };
 
-  const loginWithGoogle = async (credential: string) => {
-    const res = await ApiClient.post<TokenResponse>("/api/auth/google", { credential });
+  const loginWithGoogle = async (credential?: string) => {
+    let idToken = credential;
+
+    // If no credential provided, trigger Firebase Google Popup flow
+    if (!idToken) {
+      const firebaseUser = await signInWithGoogleFirebase();
+      idToken = firebaseUser.idToken;
+    }
+
+    const res = await ApiClient.post<TokenResponse>("/api/auth/google", { credential: idToken });
     handleAuthSuccess(res);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOutFirebase();
     localStorage.removeItem("chatgpt_access_token");
     localStorage.removeItem("chatgpt_refresh_token");
     setUser(null);
@@ -103,3 +113,4 @@ export function useAuth() {
   if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }
+

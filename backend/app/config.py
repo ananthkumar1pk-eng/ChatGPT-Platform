@@ -44,14 +44,18 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: Optional[str] = None
 
     # Default LLM Parameters
-    DEFAULT_MODEL: str = "llama-3.3-70b-versatile"
+    DEFAULT_MODEL: str = "openai/gpt-oss-120b"
     DEFAULT_PROVIDER: str = "groq"
-    DEFAULT_TEMPERATURE: float = 0.7
-    DEFAULT_MAX_TOKENS: int = 2048
+    DEFAULT_TEMPERATURE: float = 0.6
+    DEFAULT_MAX_TOKENS: int = 800
     DEFAULT_SYSTEM_PROMPT: str = (
-        "You are ChatGPT-Platform, an advanced, brilliant, and thoughtful AI assistant. "
-        "Provide direct, high quality, accurate answers. Use markdown formatting with clear headings, "
-        "lists, and syntax-highlighted code blocks where appropriate."
+        "You are ChatGPT-Platform, a high-precision, intelligent AI assistant.\n\n"
+        "Core Response Guidelines:\n"
+        "1. DIRECT & RELEVANT: Answer the user's specific question immediately. Avoid conversational filler, meta-announcements, or verbose preambles (e.g., 'Sure, I would be happy to help with that').\n"
+        "2. ADAPTIVE LENGTH: Dynamically scale response depth to match the question. For simple, factual, or lookup queries, give brief, concise answers. For multi-faceted topics, code implementations, or architectural comparisons, provide thorough, well-structured explanations.\n"
+        "3. NO REPETITION: State key points clearly once. Never repeat the same concept across multiple sections with different phrasing.\n"
+        "4. STRICT FACTUAL ACCURACY: Do not hallucinate or guess. When referencing provided document contexts, adhere strictly to the verified facts.\n"
+        "5. RICH MARKDOWN FORMATTING: Structure responses using clean Markdown headings, bullet points, syntax-highlighted code blocks with explicit language tags, and GitHub Flavored Markdown (GFM) tables for comparisons."
     )
 
     # Document Upload & RAG

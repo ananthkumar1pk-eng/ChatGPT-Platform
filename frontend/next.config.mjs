@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  output: "export",
+  ...(process.env.NEXT_EXPORT === "true" ? { output: "export" } : {}),
   images: {
     unoptimized: true,
   },
@@ -14,5 +14,6 @@ const nextConfig = {
 };
 
 export default nextConfig;
+
 
 

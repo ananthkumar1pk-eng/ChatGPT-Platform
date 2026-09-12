@@ -1,4 +1,13 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    }
+    return "https://chatgpt-platform-wpci.onrender.com";
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "https://chatgpt-platform-wpci.onrender.com";
+}
 
 export class ApiClient {
   private static getToken(): string | null {
@@ -19,7 +28,7 @@ export class ApiClient {
   }
 
   public static async get<T>(endpoint: string): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${getApiBaseUrl()}${endpoint}`;
     const res = await fetch(url, {
       method: "GET",
       headers: this.getHeaders(),
@@ -32,7 +41,7 @@ export class ApiClient {
   }
 
   public static async post<T>(endpoint: string, body?: any): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${getApiBaseUrl()}${endpoint}`;
     const res = await fetch(url, {
       method: "POST",
       headers: this.getHeaders(),
@@ -46,7 +55,7 @@ export class ApiClient {
   }
 
   public static async patch<T>(endpoint: string, body: any): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${getApiBaseUrl()}${endpoint}`;
     const res = await fetch(url, {
       method: "PATCH",
       headers: this.getHeaders(),
@@ -60,7 +69,7 @@ export class ApiClient {
   }
 
   public static async delete<T>(endpoint: string): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${getApiBaseUrl()}${endpoint}`;
     const res = await fetch(url, {
       method: "DELETE",
       headers: this.getHeaders(),
@@ -73,7 +82,7 @@ export class ApiClient {
   }
 
   public static async upload<T>(endpoint: string, formData: FormData): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${getApiBaseUrl()}${endpoint}`;
     const res = await fetch(url, {
       method: "POST",
       headers: this.getHeaders(true),
@@ -85,4 +94,9 @@ export class ApiClient {
     }
     return res.json();
   }
+
+  public static async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    return this.upload<T>(endpoint, formData);
+  }
 }
+

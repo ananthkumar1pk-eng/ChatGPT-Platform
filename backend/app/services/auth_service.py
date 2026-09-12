@@ -150,25 +150,34 @@ class AuthService:
                     detail="Invalid Google OAuth credential token"
                 )
 
-        email = user_info.get("email") if isinstance(user_info, dict) else None
+        # Extract user info
+        email = (
+            user_info.get("email")
+            or (user_info.get("firebase", {}).get("identities", {}).get("email", [None])[0] if isinstance(user_info.get("firebase"), dict) else None)
+        ) if isinstance(user_info, dict) else None
+
         if not email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Google token does not contain a verified email"
             )
 
+        full_name = user_info.get("name") or user_info.get("display_name") or email.split("@")[0]
+        avatar_url = user_info.get("picture") or user_info.get("photoURL") or user_info.get("photo_url")
+        provider_id = user_info.get("sub") or user_info.get("user_id") or user_info.get("uid")
+
         stmt = select(User).where(User.email == email.lower())
         result = await self.db.execute(stmt)
         user = result.scalar_one_or_none()
 
         if not user:
-            # Create new user from Google profile
+            # Create new user from Google/Firebase profile
             user = User(
                 email=email.lower(),
-                full_name=user_info.get("name") or email.split("@")[0],
-                avatar_url=user_info.get("picture"),
+                full_name=full_name,
+                avatar_url=avatar_url,
                 auth_provider="google",
-                provider_id=user_info.get("sub"),
+                provider_id=provider_id,
                 is_active=True,
                 is_verified=True,
             )
@@ -188,9 +197,11 @@ class AuthService:
             await self.db.commit()
             await self.db.refresh(user)
         else:
-            # Update avatar or provider if not set
-            if not user.avatar_url and user_info.get("picture"):
-                user.avatar_url = user_info.get("picture")
+            # Update avatar or name if not set
+            if not user.avatar_url and avatar_url:
+                user.avatar_url = avatar_url
+            if (not user.full_name or user.full_name == email.split("@")[0]) and full_name:
+                user.full_name = full_name
             await self.db.commit()
 
         # Generate tokens

@@ -67,6 +67,27 @@ class VectorStoreService:
                     "full_content": chunk.content
                 })
 
+        # Check if query is a global document summarization / overview intent
+        is_summary_query = any(k in query.lower() for k in [
+            "summarize", "sumerize", "summary", "overview", "what is this", "explain this pdf",
+            "explain the document", "key points", "main points", "tell me about this document"
+        ])
+
+        if is_summary_query and rows:
+            summary_chunks = []
+            for chunk, filename, file_type in rows[:8]:
+                summary_chunks.append({
+                    "document_id": chunk.document_id,
+                    "filename": filename,
+                    "file_type": file_type,
+                    "page_number": chunk.page_number,
+                    "chunk_index": chunk.chunk_index,
+                    "score": 1.0,
+                    "snippet": chunk.content[:240] + ("..." if len(chunk.content) > 240 else ""),
+                    "full_content": chunk.content
+                })
+            return summary_chunks
+
         # Sort by score descending
         ranked.sort(key=lambda x: x["score"], reverse=True)
 

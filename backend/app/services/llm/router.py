@@ -19,12 +19,52 @@ from app.schemas.user import AvailableModel
 # Comprehensive catalog of supported hosted models
 SUPPORTED_MODELS: List[AvailableModel] = [
     AvailableModel(
+        id="microsoft/florence-2-base",
+        name="Florence-2 VLM",
+        provider="microsoft",
+        description="Microsoft Vision Foundation Model for camera snapshots, deep captioning, object detection, OCR & VQA.",
+        context_window="Visual VLM",
+        is_free=True
+    ),
+    AvailableModel(
+        id="efficient-large-model/sana-1.6b",
+        name="Sana 1.6B Diffusion",
+        provider="sana",
+        description="Linear Diffusion Transformer for state-of-the-art text-to-image synthesis at high resolution.",
+        context_window="Text-to-Image",
+        is_free=True
+    ),
+    AvailableModel(
+        id="systran/faster-whisper-base",
+        name="Faster-Whisper (ASR)",
+        provider="whisper",
+        description="High-speed CTranslate2 speech-to-text transcription with auto language detection.",
+        context_window="Audio ASR",
+        is_free=True
+    ),
+    AvailableModel(
         id="openai/gpt-oss-120b",
         name="GPT OSS 120B",
         provider="groq",
         description="Flagship open reasoning & coding model with ultra-fast Groq LPU inference.",
         context_window="131k",
         is_default=True,
+        is_free=True
+    ),
+    AvailableModel(
+        id="openai/gpt-oss-20b",
+        name="GPT OSS 20B",
+        provider="groq",
+        description="Ultra-low latency instant reasoning model on Groq LPUs.",
+        context_window="131k",
+        is_free=True
+    ),
+    AvailableModel(
+        id="qwen/qwen3.8-27b",
+        name="Qwen 3.8 27B",
+        provider="groq",
+        description="High-intelligence multimodal vision & reasoning model on Groq.",
+        context_window="131k",
         is_free=True
     ),
     AvailableModel(
@@ -36,35 +76,11 @@ SUPPORTED_MODELS: List[AvailableModel] = [
         is_free=True
     ),
     AvailableModel(
-        id="openai/gpt-oss-20b",
-        name="GPT OSS 20B",
-        provider="groq",
-        description="Ultra-low latency reasoning model on Groq.",
-        context_window="131k",
-        is_free=True
-    ),
-    AvailableModel(
         id="groq/compound",
         name="Groq Compound",
         provider="groq",
         description="Fast agentic reasoning system on Groq.",
         context_window="131k",
-        is_free=True
-    ),
-    AvailableModel(
-        id="llama-3.1-8b-instant",
-        name="Llama 3.1 8B (Instant)",
-        provider="groq",
-        description="Blazing fast lightweight model for rapid responses.",
-        context_window="128k",
-        is_free=True
-    ),
-    AvailableModel(
-        id="llama-3.3-70b-versatile",
-        name="Llama 3.3 70B (Versatile)",
-        provider="groq",
-        description="State-of-the-art open model on Groq LPUs.",
-        context_window="128k",
         is_free=True
     ),
     AvailableModel(
@@ -187,7 +203,7 @@ class LLMRouter:
 
         # 3. If no valid key was found, check if ANY server key is available to use as fallback
         if settings.GROQ_API_KEY:
-            return GroqProvider(api_key=settings.GROQ_API_KEY), "openai/gpt-oss-120b", "groq"
+            return GroqProvider(api_key=settings.GROQ_API_KEY), "llama-3.3-70b-versatile", "groq"
         if settings.OPENAI_API_KEY:
             return OpenAIProvider(api_key=settings.OPENAI_API_KEY), "gpt-4o-mini", "openai"
         if settings.GEMINI_API_KEY:

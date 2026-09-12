@@ -8,4 +8,3 @@ export function generateStaticParams() {
 export default function ConversationPage() {
   return <ConversationClient />;
 }
-

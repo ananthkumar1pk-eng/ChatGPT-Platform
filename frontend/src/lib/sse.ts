@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { getApiBaseUrl } from "@/lib/api";
 
 export interface StreamCallbacks {
   onStart?: (data: { conversation_id: string; message_id: string; model: string }) => void;
@@ -23,7 +23,7 @@ export async function streamChat(
   abortSignal?: AbortSignal
 ): Promise<void> {
   const token = typeof window !== "undefined" ? localStorage.getItem("chatgpt_access_token") : null;
-  const url = `${API_BASE_URL}/api/chat/stream`;
+  const url = `${getApiBaseUrl()}/api/chat/stream`;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

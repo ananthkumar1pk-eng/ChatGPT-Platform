@@ -16,6 +16,9 @@ from app.routers import (
     documents_router,
     models_router,
     user_router,
+    vision_router,
+    image_gen_router,
+    audio_router,
 )
 
 
@@ -23,13 +26,15 @@ from app.routers import (
 async def lifespan(app: FastAPI):
     # Startup: Initialize Database & Tables
     await init_db()
+    # Ensure uploads directories exist
+    os.makedirs("./uploads/generated", exist_ok=True)
     yield
     # Shutdown logic if needed
 
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Multi-User ChatGPT-Style AI Platform with Hosted Inference, RAG, and Real-Time Streaming.",
+    description="Multi-User ChatGPT-Style AI Platform with Hosted Inference, Multimodal Vision (Florence-2), Image Diffusion (Sana 1.6B), Speech-to-Text (Faster-Whisper), RAG, and Real-Time Streaming.",
     version="3.0.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -53,12 +58,21 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Mount Static Files for Uploads and Generated Images
+if not os.path.exists("./uploads"):
+    os.makedirs("./uploads/generated", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="./uploads"), name="uploads")
+
 # Mount Routers
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(documents_router)
 app.include_router(models_router)
 app.include_router(user_router)
+app.include_router(vision_router)
+app.include_router(image_gen_router)
+app.include_router(audio_router)
+
 
 
 @app.get("/")
